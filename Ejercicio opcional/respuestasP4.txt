@@ -1,0 +1,54 @@
+Respuesta [2]: rand_r devuelve un entero pseudo-aleatorio entre 0 y 
+RAND_MAX. Como argumento se le pasa una semilla de una serie de enteros 
+pseudo-aleatorios que serán devueltos en secuencia.
+Como efecto tiene que cada hilo va a bloquear (sleep) su ejecución por un 
+tiempo determinado y diferente a cada hilo.
+
+Respuesta [3]: Que el hilo inicial termina y sus hijos también, debido a 
+que los hilos cooperantes comparten áreas del proceso que ya habría 
+finalizado como el código, las variables globales y el heap.
+
+Respuesta [4.1]: Es correcto si han finalizado todos los hilos y se van 
+imprimiendo cada identificador. Si no se espera a que finalice todos los 
+hilos puede haber condiciones de carrera si accedemos a la variable global 
+clasificacionFinal para imprimir el identificador del 
+coche que ha terminado mientras otros coches sin terminar también 
+estuvieran accediendo. Una mejor y correcta solución es esperar a que todos 
+los hilos (coches) hayan terminado y después mostrar la clasificación 
+final.
+
+Respuesta [4.2.c]: Sí, podría producirse condiciones de carrera cuya 
+sección critica es modificar la variable global calsificacionFinal.
+La función rand_r() al tratarse de una función re-eentrante no ocasiona 
+ningún problema.
+Usando las funciones pthread_mutex_init(), pthread_mutex_lock(), 
+pthread_mutex_unlock() y pthread_mutex_destroy() se solucionaría el 
+problema.
+
+Modificaciones adicionales:
+Para evitar warnings con el compilador se han incluido las cabeceras 
+sys/types.h y unistd.h
+También para quitar otro warning se ha modificado el argumento de 
+funcion_coche a void *arg, después dentro de la función se hace uso del 
+casting para hacer la conversión a coche_t *
+Se tiene en cuenta los errores y son mostrados con perror si los hay.
+
+Para aprender más sobre los semáforos se han implementado unos propios
+de la siguiente forma:
+
+- semaforo.h: Interfaz con las funciones prototipo de P() y V() y la 
+estructura de datos del semáforo.
+
+- semaforo_con_espera_activa.c: Utiliza la instrucción test_and_set de 
+forma atómica para realizar una sincronización por hardware. Es con espera 
+activa, es decir, se mantiene en un bucle indefinido hasta que pueda 
+ejecutar la sección critica.
+
+- semaforo_sin_espera_activa.c: Utiliza la llamada del sistema futex() para 
+esperar o despertar el proceso. Para que sea sin espera activa se hace una 
+llamada al sistema de sched_yield() que mueve el proceso a la cola de 
+listos y así no está malgastando su tiempo.
+
+- simula_car_adicional.c: lo mismo que simula_car.c pero utiliza los 
+semáforos que se han implementado. Al hacer make hay dos ejecutables más: 
+simula_car_con_espera_activa y simula_car_sin_espera_activa
